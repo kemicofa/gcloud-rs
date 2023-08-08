@@ -51,6 +51,9 @@ impl GCloudIdentity {
         let client = Client::new();
         let response = client.request(request).await?;
         let body = response.body();
+
+        // TODO: to make this library/cli indepdenant from hyper when used as a library
+        // the post request should actually be done in main.rs
         Ok(())
     }
 
