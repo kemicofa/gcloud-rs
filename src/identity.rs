@@ -2,8 +2,6 @@ use std::{
     str::FromStr,
     time::{Duration, SystemTime},
 };
-
-use hyper::{Body, Client, Request};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -34,8 +32,8 @@ impl GCloudIdentity {
         self.created_at.elapsed().unwrap() > threshold_duration
     }
 
-    pub async fn refresh_access_token(&mut self) -> Result<(), hyper::Error> {
-        let url =
+    pub fn get_refresh_access_token_uri(&mut self) -> Result<String, &str> {
+        let mut url =
             Url::from_str(DEFAULT_TOKEN_HOST).expect("Unable to generate url from token base url");
 
         let mut encoded_params = form_urlencoded::Serializer::new(String::new());
@@ -45,16 +43,8 @@ impl GCloudIdentity {
         }
 
         encoded_params.append_pair("refresh_token", self.refresh_token.as_str());
-
-        let body = Body::from(encoded_params.finish());
-        let request = Request::post(url.to_string()).body(body).unwrap();
-        let client = Client::new();
-        let response = client.request(request).await?;
-        let body = response.body();
-
-        // TODO: to make this library/cli indepdenant from hyper when used as a library
-        // the post request should actually be done in main.rs
-        Ok(())
+        url.set_query(Some(encoded_params.finish().as_str()));
+        Ok(url.to_string())
     }
 
     pub fn get_token(&self) -> Result<String, String> {
